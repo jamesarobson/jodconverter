@@ -49,7 +49,7 @@ public class OfficeUtils {
                 Map<String,Object> subProperties = (Map<String,Object>) value;
                 value = toUnoProperties(subProperties);
             }
-            propertyValues[i++] = property((String) entry.getKey(), value);
+            propertyValues[i++] = property(entry.getKey(), value);
         }
         return propertyValues;
     }
@@ -61,41 +61,20 @@ public class OfficeUtils {
     }
 
     public static File getDefaultOfficeHome() {
-        if (System.getProperty("office.home") != null) {
-            return new File(System.getProperty("office.home"));
+        File officeHome = new File(PlatformUtils.OO_HOME_PATH);
+        if (officeHome != null && officeHome.exists() ) {
+            return officeHome;
+        } else if (System.getProperty("office.home") != null) {
+            officeHome = new File(System.getProperty("office.home"));
         }
-        if (PlatformUtils.isWindows()) {
-            // %ProgramFiles(x86)% on 64-bit machines; %ProgramFiles% on 32-bit ones
-            String programFiles = System.getenv("ProgramFiles(x86)");
-            if (programFiles == null) {
-                programFiles = System.getenv("ProgramFiles");
-            }
-            return findOfficeHome(
-                programFiles + File.separator + "OpenOffice.org 3",
-                programFiles + File.separator + "LibreOffice 3"
-            );
-        } else if (PlatformUtils.isMac()) {
-            return findOfficeHome(
-                "/Applications/OpenOffice.org.app/Contents",
-                "/Applications/LibreOffice.app/Contents"
-            );
-        } else {
-            // Linux or other *nix variants
-            return findOfficeHome(
-                "/opt/openoffice.org3",
-                "/opt/libreoffice",
-                "/usr/lib/openoffice",
-                "/usr/lib/libreoffice"
-            );
-        }
+        return officeHome;
     }
 
-    private static File findOfficeHome(String... knownPaths) {
-        for (String path : knownPaths) {
-            File home = new File(path);
-            if (getOfficeExecutable(home).isFile()) {
-                return home;
-            }
+    public static File getDefaultProfileDir() {
+        if (System.getProperty("office.profile") != null) {
+            return new File(System.getProperty("office.profile"));
+        } else {
+            return new File(PlatformUtils.OO_PROFILE_DIR_PATH);
         }
         return null;
     }
