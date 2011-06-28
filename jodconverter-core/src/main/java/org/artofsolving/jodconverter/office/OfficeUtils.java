@@ -71,8 +71,11 @@ public class OfficeUtils {
      * @return Office home found
      */
     public static File getDefaultOfficeHome() {
-        return new File(System.getProperty("office.home",
-                PlatformUtils.findOfficeHome()));
+        String officeHome = System.getProperty("office.home");
+        if (officeHome == null) {
+            officeHome = PlatformUtils.findOfficeHome();
+        }
+        return new File(officeHome);
     }
 
     /**
@@ -84,8 +87,11 @@ public class OfficeUtils {
      * @return Office profile found
      */
     public static File getDefaultProfileDir() {
-        return new File(System.getProperty("office.profile",
-                PlatformUtils.findOfficeProfileDir()));
+        String officeProfile = System.getProperty("office.profile");
+        if (officeProfile == null) {
+            officeProfile = PlatformUtils.findOfficeProfileDir();
+        }
+        return new File(officeProfile);
     }
 
     public static File getOfficeExecutable(File officeHome) {
