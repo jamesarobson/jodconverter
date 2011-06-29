@@ -158,7 +158,7 @@ public class DefaultOfficeManagerConfiguration {
         } else if (!officeHome.isDirectory()) {
             throw new IllegalStateException("officeHome doesn't exist or is not a directory: " + officeHome);
         } else if (!OfficeUtils.getOfficeExecutable(officeHome).isFile()) {
-            throw new IllegalStateException("invalid officeHome: it doesn't contain soffice.bin: " + officeHome);
+            throw new IllegalStateException("invalid officeHome: couldn't find " + OfficeUtils.getOfficeExecutable(officeHome));
         }
         if (templateProfileDir != null && !isValidProfileDir(templateProfileDir)) {
             throw new IllegalStateException("templateProfileDir doesn't appear to contain a user profile: " + templateProfileDir);
@@ -170,7 +170,7 @@ public class DefaultOfficeManagerConfiguration {
         if (processManager == null) {
             processManager = findBestProcessManager();
         }
-        
+
         int numInstances = connectionProtocol == OfficeConnectionProtocol.PIPE ? pipeNames.length : portNumbers.length;
         UnoUrl[] unoUrls = new UnoUrl[numInstances];
         for (int i = 0; i < numInstances; i++) {
