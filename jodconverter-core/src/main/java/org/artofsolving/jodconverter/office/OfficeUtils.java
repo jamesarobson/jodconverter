@@ -10,6 +10,8 @@
 // 2. The Apache License, Version 2.0
 //    -> http://www.apache.org/licenses/LICENSE-2.0.txt
 //
+// Contributors:
+//     Laurent Doguin (Nuxeo), Julien Carsique (Nuxeo)
 package org.artofsolving.jodconverter.office;
 
 import java.io.File;
@@ -39,17 +41,17 @@ public class OfficeUtils {
         return propertyValue;
     }
 
-    @SuppressWarnings("unchecked")
-    public static PropertyValue[] toUnoProperties(Map<String,?> properties) {
+    public static PropertyValue[] toUnoProperties(Map<String, ?> properties) {
         PropertyValue[] propertyValues = new PropertyValue[properties.size()];
         int i = 0;
-        for (Map.Entry<String,?> entry : properties.entrySet()) {
+        for (Map.Entry<String, ?> entry : properties.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof Map) {
-                Map<String,Object> subProperties = (Map<String,Object>) value;
+                @SuppressWarnings("unchecked")
+                Map<String, Object> subProperties = (Map<String, Object>) value;
                 value = toUnoProperties(subProperties);
             }
-            propertyValues[i++] = property((String) entry.getKey(), value);
+            propertyValues[i++] = property(entry.getKey(), value);
         }
         return propertyValues;
     }
@@ -60,49 +62,43 @@ public class OfficeUtils {
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 
+    /**
+     * Search for an (Open/Libre)Office install.
+     * If the System property "office.home" is defined, it takes precedence.
+     *
+     * @see PlatformUtils#findOfficeHome()
+     *
+     * @return Office home found
+     */
     public static File getDefaultOfficeHome() {
-        if (System.getProperty("office.home") != null) {
-            return new File(System.getProperty("office.home"));
+        String officeHome = System.getProperty("office.home");
+        if (officeHome == null) {
+            officeHome = PlatformUtils.findOfficeHome();
         }
-        if (PlatformUtils.isWindows()) {
-            // %ProgramFiles(x86)% on 64-bit machines; %ProgramFiles% on 32-bit ones
-            String programFiles = System.getenv("ProgramFiles(x86)");
-            if (programFiles == null) {
-                programFiles = System.getenv("ProgramFiles");
-            }
-            return findOfficeHome(
-                programFiles + File.separator + "OpenOffice.org 3",
-                programFiles + File.separator + "LibreOffice 3"
-            );
-        } else if (PlatformUtils.isMac()) {
-            return findOfficeHome(
-                "/Applications/OpenOffice.org.app/Contents",
-                "/Applications/LibreOffice.app/Contents"
-            );
-        } else {
-            // Linux or other *nix variants
-            return findOfficeHome(
-                "/opt/openoffice.org3",
-                "/opt/libreoffice",
-                "/usr/lib/openoffice",
-                "/usr/lib/libreoffice"
-            );
-        }
+        return new File(officeHome);
     }
 
-    private static File findOfficeHome(String... knownPaths) {
-        for (String path : knownPaths) {
-            File home = new File(path);
-            if (getOfficeExecutable(home).isFile()) {
-                return home;
-            }
+    /**
+     * Search for an (Open/Libre)Office profile.
+     * If the System property "office.profile" is defined, it takes precedence.
+     *
+     * @see PlatformUtils#findOfficeProfileDir()
+     *
+     * @return Office profile found
+     */
+    public static File getDefaultProfileDir() {
+        String officeProfile = System.getProperty("office.profile");
+        if (officeProfile == null) {
+            officeProfile = PlatformUtils.findOfficeProfileDir();
         }
-        return null;
+        return new File(officeProfile);
     }
 
     public static File getOfficeExecutable(File officeHome) {
         if (PlatformUtils.isMac()) {
             return new File(officeHome, "MacOS/soffice.bin");
+        } else if (PlatformUtils.isWindows()) {
+            return new File(officeHome, "program/soffice.exe");
         } else {
             return new File(officeHome, "program/soffice.bin");
         }
