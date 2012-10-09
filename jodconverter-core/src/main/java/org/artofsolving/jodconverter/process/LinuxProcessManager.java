@@ -14,6 +14,7 @@ package org.artofsolving.jodconverter.process;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,6 +33,7 @@ public class LinuxProcessManager implements ProcessManager {
     private static final Pattern PS_OUTPUT_LINE = Pattern.compile("^\\s*(\\d+)\\s+(.*)$"); 
 
     private String[] runAsArgs;
+    private final Logger logger = Logger.getLogger(getClass().getName());
 
     public void setRunAsArgs(String... runAsArgs) {
 		this.runAsArgs = runAsArgs;
@@ -42,6 +44,7 @@ public class LinuxProcessManager implements ProcessManager {
     }
 
     public long findPid(ProcessQuery query) throws IOException {
+        logger.finer(String.format("trying to find process by query [ %s ]", query));
         String regex = Pattern.quote(query.getCommand()) + ".*" + Pattern.quote(query.getArgument());
         Pattern commandPattern = Pattern.compile(regex);
         for (String line : execute(psCommand())) {
@@ -50,10 +53,13 @@ public class LinuxProcessManager implements ProcessManager {
                 String command = lineMatcher.group(2);
                 Matcher commandMatcher = commandPattern.matcher(command);
                 if (commandMatcher.find()) {
-                    return Long.parseLong(lineMatcher.group(1));
+                    final long pid = Long.parseLong(lineMatcher.group(1));
+                    logger.finer(String.format("found process for query [ %s ] with pid [ %s ]", query, pid));
+                    return pid;
                 }
             }
         }
+        logger.fine(String.format("no process found for query [ %s ]", query));
         return PID_NOT_FOUND;
     }
 
