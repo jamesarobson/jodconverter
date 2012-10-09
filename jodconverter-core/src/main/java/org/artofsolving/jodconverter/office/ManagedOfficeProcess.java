@@ -89,7 +89,14 @@ class ManagedOfficeProcess {
 	public void restartDueToTaskTimeout() {
 		executor.execute(new Runnable() {
 			public void run() {
-				doTerminateProcess();
+				try {
+					doTerminateProcess();
+				} catch (OfficeException e) {
+					logger.info("error on restart due to task timeout; making sure process is gone and restarted");
+					doEnsureProcessExited();
+					restartDueToLostConnection();
+					throw e;
+				}
 				// will cause unexpected disconnection and subsequent restart
 			}
 		});

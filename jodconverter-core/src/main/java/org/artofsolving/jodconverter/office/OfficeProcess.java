@@ -209,13 +209,9 @@ class OfficeProcess {
             + (this.pid != PID_UNKNOWN ? " (pid " + this.pid + ")" : ""));
         if (this.pid == PID_UNKNOWN) {
             long foundPid = this.processManager.findPid(new ProcessQuery(OfficeUtils.getOfficeExecutable(officeHome).getName(), this.unoUrl.getAcceptString()));
-            try {
-                this.processManager.kill(this.process, foundPid);
-            } catch (IllegalArgumentException ex) {
-                this.logger.severe("Failed to forcibly terminate process: " + ex.getMessage());
-            }
+            this.processManager.kill(this.process, foundPid);
         } else {
-        		this.processManager.kill(this.process, this.pid);
+        	this.processManager.kill(this.process, this.pid);
         }
         return getExitCode(retryInterval, retryTimeout);
     }
