@@ -14,6 +14,7 @@ package org.artofsolving.jodconverter.office;
 
 import static org.artofsolving.jodconverter.process.ProcessManager.PID_NOT_FOUND;
 import static org.artofsolving.jodconverter.process.ProcessManager.PID_UNKNOWN;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import org.apache.commons.io.FileUtils;
 import org.artofsolving.jodconverter.process.ProcessManager;
 import org.artofsolving.jodconverter.process.ProcessQuery;
 import org.artofsolving.jodconverter.util.PlatformUtils;
+import org.artofsolving.jodconverter.util.ProcessLoggingUtils;
 
 class OfficeProcess {
 
@@ -40,8 +42,9 @@ class OfficeProcess {
 	private long pid = PID_UNKNOWN;
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
-
-    public OfficeProcess(File officeHome, UnoUrl unoUrl, String[] runAsArgs, File templateProfileDir, File workDir, ProcessManager processManager) {
+	private final Logger loggerProcessOutput = Logger.getLogger(logger.getName() + ".ProcessOutput");
+	
+	public OfficeProcess(File officeHome, UnoUrl unoUrl, String[] runAsArgs, File templateProfileDir, File workDir, ProcessManager processManager) {
 		this.officeHome = officeHome;
 		this.unoUrl = unoUrl;
 		this.runAsArgs = runAsArgs;
@@ -80,12 +83,13 @@ class OfficeProcess {
 		command.add("-nologo");
 		command.add("-norestore");
         ProcessBuilder processBuilder = new ProcessBuilder(command);
-		if (PlatformUtils.isWindows()) {
+        if (PlatformUtils.isWindows()) {
 			addBasisAndUrePaths(processBuilder);
 		}
 		logger.info(String.format("starting process with acceptString '%s' and profileDir '%s'", unoUrl, instanceProfileDir));
 		process = processBuilder.start();
 		pid = processManager.findPid(processQuery);
+		ProcessLoggingUtils.logProcessOutput(process, pid, loggerProcessOutput);
 		if (pid == PID_NOT_FOUND) {
             throw new IllegalStateException(String.format("process with acceptString '%s' started but its pid could not be found",
                     unoUrl.getAcceptString()));
@@ -93,7 +97,7 @@ class OfficeProcess {
 		logger.info("started process" + (pid != PID_UNKNOWN ? "; pid = " + pid : ""));
 	}
 
-    private File getInstanceProfileDir(File workDir, UnoUrl unoUrl) {
+	private File getInstanceProfileDir(File workDir, UnoUrl unoUrl) {
         String dirName = ".jodconverter_" + unoUrl.getAcceptString().replace(',', '_').replace('=', '-');
 		return new File(workDir, dirName);
 	}
@@ -211,7 +215,7 @@ class OfficeProcess {
                 this.logger.severe("Failed to forcibly terminate process: " + ex.getMessage());
             }
         } else {
-            this.processManager.kill(this.process, this.pid);
+        		this.processManager.kill(this.process, this.pid);
         }
         return getExitCode(retryInterval, retryTimeout);
     }
