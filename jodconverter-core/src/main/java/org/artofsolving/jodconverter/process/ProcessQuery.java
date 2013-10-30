@@ -30,4 +30,8 @@ public class ProcessQuery {
         return argument;
     }
 
+    @Override
+    public String toString() {
+        return String.format("ProcessQuery[command='%s',argument='%s']", command, argument);
+    }
 }
