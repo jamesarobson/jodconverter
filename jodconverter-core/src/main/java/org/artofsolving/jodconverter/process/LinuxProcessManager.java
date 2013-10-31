@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.apache.commons.io.IOUtils;
 
 /**
@@ -32,6 +35,7 @@ public class LinuxProcessManager implements ProcessManager {
     private static final Pattern PS_OUTPUT_LINE = Pattern.compile("^\\s*(\\d+)\\s+(.*)$"); 
 
     private String[] runAsArgs;
+    private final Logger logger = LoggerFactory.getLogger(LinuxProcessManager.class);
 
     public void setRunAsArgs(String... runAsArgs) {
 		this.runAsArgs = runAsArgs;
@@ -42,6 +46,7 @@ public class LinuxProcessManager implements ProcessManager {
     }
 
     public long findPid(ProcessQuery query) throws IOException {
+        logger.debug("trying to find process by query [ {} ]", query);
         String regex = Pattern.quote(query.getCommand()) + ".*" + Pattern.quote(query.getArgument());
         Pattern commandPattern = Pattern.compile(regex);
         for (String line : execute(psCommand())) {
@@ -50,14 +55,20 @@ public class LinuxProcessManager implements ProcessManager {
                 String command = lineMatcher.group(2);
                 Matcher commandMatcher = commandPattern.matcher(command);
                 if (commandMatcher.find()) {
-                    return Long.parseLong(lineMatcher.group(1));
+                    final long pid = Long.parseLong(lineMatcher.group(1));
+                    logger.debug("found process for query [ {} ] with pid [ {} ]", query, pid);
+                    return pid;
                 }
             }
         }
+        logger.warn("no process found for query [ {} ]", query);
         return PID_NOT_FOUND;
     }
 
     public void kill(Process process, long pid) throws IOException {
+        if(process != null){
+            process.destroy();
+        }
     	if (pid <= 0) {
     		throw new IllegalArgumentException("invalid pid: " + pid);
     	}
